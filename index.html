@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendataan Air AC - UPA Lahan Basah</title>
+    <style>
+        :root {
+            --primary-color: #0284c7; /* Warna biru air */
+            --secondary-color: #0ea5e9;
+            --success-color: #10b981; /* Warna hijau untuk Excel */
+            --success-hover: #059669;
+            --bg-color: #f0f9ff;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1, h3 {
+            text-align: center;
+            color: var(--primary-color);
+            margin: 5px 0;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+            margin: 20px 0;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus {
+            border-color: var(--secondary-color);
+        }
+        button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+        }
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--text-color);
+        }
+        .btn-export {
+            background-color: var(--success-color);
+            font-size: 14px;
+            padding: 6px 12px;
+        }
+        .btn-export:hover {
+            background-color: var(--success-hover);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .delete-btn {
+            background-color: #ef4444;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+        .empty-msg {
+            color: #64748b;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sistem Pendataan Penampungan Air AC</h1>
+    <h3>Kantor UPA Lingkungan Lahan Basah</h3>
+    <hr>
+
+    <div class="form-group">
+        <input type="date" id="tanggal" required>
+        <input type="number" id="volume" placeholder="Volume Air (Liter)" step="0.1" required>
+        <button onclick="tambahData()">Simpan Data</button>
+    </div>
+
+    <div>
+        <div class="section-header">
+            <h2>1. Data Perhitungan Harian</h2>
+            <button class="btn-export" onclick="eksporHarian()">Excel (.csv)</button>
+        </div>
+        <table id="tabelHarian">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Volume (Liter)</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div class="section-header">
+            <h2>2. Data Perhitungan Bulanan</h2>
+            <button class="btn-export" onclick="eksporBulanan()">Excel (.csv)</button>
+        </div>
+        <table id="tabelBulanan">
+            <thead>
+                <tr>
+                    <th>Bulan - Tahun</th>
+                    <th>Total Volume (Liter)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div class="section-header">
+            <h2>3. Data Perhitungan Tahunan</h2>
+            <button class="btn-export" onclick="eksporTahunan()">Excel (.csv)</button>
+        </div>
+        <table id="tabelTahunan">
+            <thead>
+                <tr>
+                    <th>Tahun</th>
+                    <th>Total Volume (Liter)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Inisialisasi data dari Local Storage
+    let dataAir = JSON.parse(localStorage.getItem('dataAirAC')) || [];
+
+    // Format Tanggal (Bulan dalam bahasa Indonesia)
+    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // Fungsi untuk menambah data
+    function tambahData() {
+        const tanggal = document.getElementById('tanggal').value;
+        const volume = parseFloat(document.getElementById('volume').value);
+
+        if (!tanggal || isNaN(volume)) {
+            alert("Mohon isi tanggal dan volume dengan benar!");
+            return;
+        }
+
+        const newData = { id: Date.now(), tanggal, volume };
+        dataAir.push(newData);
+        
+        // Urutkan data berdasarkan tanggal terbaru
+        dataAir.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+        simpanKeStorage();
+        renderSemuaData();
+
+        // Reset Form
+        document.getElementById('tanggal').value = '';
+        document.getElementById('volume').value = '';
+    }
+
+    // Fungsi untuk menghapus data
+    function hapusData(id) {
+        if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+            dataAir = dataAir.filter(item => item.id !== id);
+            simpanKeStorage();
+            renderSemuaData();
+        }
+    }
+
+    // Fungsi menyimpan ke Local Storage
+    function simpanKeStorage() {
+        localStorage.setItem('dataAirAC', JSON.stringify(dataAir));
+    }
+
+    // Fungsi utama untuk me-render semua tabel
+    function renderSemuaData() {
+        renderHarian();
+        renderRekapTabel();
+    }
+
+    // Tampilkan Data Harian
+    function renderHarian() {
+        const tbody = document.querySelector('#tabelHarian tbody');
+        tbody.innerHTML = '';
+        
+        if (dataAir.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="empty-msg">Belum ada data harian.</td></tr>';
+            return;
+        }
+
+        dataAir.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${formatTanggalIndo(item.tanggal)}</td>
+                    <td>${item.volume.toFixed(2)} L</td>
+                    <td><button class="delete-btn" onclick="hapusData(${item.id})">Hapus</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    // Membantu memformat tanggal YYYY-MM-DD menjadi DD/MM/YYYY
+    function formatTanggalIndo(dateStr) {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+    }
+
+    // Fungsi Kalkulasi Rekap Bulanan dan Tahunan
+    function hitungRekap() {
+        const rekapBulanan = {};
+        const rekapTahunan = {};
+
+        // Gunakan salinan data agar rekap bulanan/tahunan berurutan maju
+        const dataUrutMaju = [...dataAir].reverse();
+
+        dataUrutMaju.forEach(item => {
+            const dateObj = new Date(item.tanggal);
+            const bulan = namaBulan[dateObj.getMonth()];
+            const tahun = dateObj.getFullYear();
+            const keyBulan = `${bulan} ${tahun}`;
+            
+            // Rekap Bulanan
+            if (!rekapBulanan[keyBulan]) rekapBulanan[keyBulan] = 0;
+            rekapBulanan[keyBulan] += item.volume;
+
+            // Rekap Tahunan
+            if (!rekapTahunan[tahun]) rekapTahunan[tahun] = 0;
+            rekapTahunan[tahun] += item.volume;
+        });
+
+        return { rekapBulanan, rekapTahunan };
+    }
+
+    // Tampilkan Data Bulanan & Tahunan ke Tabel
+    function renderRekapTabel() {
+        const { rekapBulanan, rekapTahunan } = hitungRekap();
+
+        // Render Bulanan
+        const tbodyBulanan = document.querySelector('#tabelBulanan tbody');
+        tbodyBulanan.innerHTML = '';
+        if (Object.keys(rekapBulanan).length === 0) {
+            tbodyBulanan.innerHTML = '<tr><td colspan="2" class="empty-msg">Belum ada data bulanan.</td></tr>';
+        } else {
+            for (const [bulanTahun, total] of Object.entries(rekapBulanan)) {
+                tbodyBulanan.innerHTML += `
+                    <tr>
+                        <td>${bulanTahun}</td>
+                        <td>${total.toFixed(2)} L</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Render Tahunan
+        const tbodyTahunan = document.querySelector('#tabelTahunan tbody');
+        tbodyTahunan.innerHTML = '';
+        if (Object.keys(rekapTahunan).length === 0) {
+            tbodyTahunan.innerHTML = '<tr><td colspan="2" class="empty-msg">Belum ada data tahunan.</td></tr>';
+        } else {
+            for (const [tahun, total] of Object.entries(rekapTahunan)) {
+                tbodyTahunan.innerHTML += `
+                    <tr>
+                        <td>${tahun}</td>
+                        <td>${total.toFixed(2)} L</td>
+                    </tr>
+                `;
+            }
+        }
+    }
+
+    // --- FITUR EKSPOR KE EXCEL ---
+    
+    function unduhCSV(konten, namaFile) {
+        // Menambahkan BOM (Byte Order Mark) agar Excel otomatis membaca dengan format UTF-8
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); 
+        const blob = new Blob([bom, konten], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", namaFile);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function eksporHarian() {
+        if (dataAir.length === 0) {
+            alert("Tidak ada data harian untuk diekspor!");
+            return;
+        }
+        let csv = "Tanggal,Volume (Liter)\n";
+        dataAir.forEach(item => {
+            csv += `"${formatTanggalIndo(item.tanggal)}","${item.volume.toFixed(2)}"\n`;
+        });
+        unduhCSV(csv, "Data_Harian_Air_AC_UPA_Lahan_Basah.csv");
+    }
+
+    function eksporBulanan() {
+        const { rekapBulanan } = hitungRekap();
+        if (Object.keys(rekapBulanan).length === 0) {
+            alert("Tidak ada data bulanan untuk diekspor!");
+            return;
+        }
+        let csv = "Bulan - Tahun,Total Volume (Liter)\n";
+        for (const [bulanTahun, total] of Object.entries(rekapBulanan)) {
+            csv += `"${bulanTahun}","${total.toFixed(2)}"\n`;
+        }
+        unduhCSV(csv, "Data_Bulanan_Air_AC_UPA_Lahan_Basah.csv");
+    }
+
+    function eksporTahunan() {
+        const { rekapTahunan } = hitungRekap();
+        if (Object.keys(rekapTahunan).length === 0) {
+            alert("Tidak ada data tahunan untuk diekspor!");
+            return;
+        }
+        let csv = "Tahun,Total Volume (Liter)\n";
+        for (const [tahun, total] of Object.entries(rekapTahunan)) {
+            csv += `"${tahun}","${total.toFixed(2)}"\n`;
+        }
+        unduhCSV(csv, "Data_Tahunan_Air_AC_UPA_Lahan_Basah.csv");
+    }
+
+    // Load data pertama kali halaman dibuka
+    window.onload = renderSemuaData;
+</script>
+
+</body>
+</html>

@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pendataan Air AC - UPA Lingkungan Lahan Basah ULM</title>
+    <title>Pendataan Air AC - UPA Lingkungan Lahan Basah</title>
     <style>
         :root {
-            --primary-color: #0284c7; /* Warna biru air */
-            --secondary-color: #0ea5e9;
-            --success-color: #10b981; /* Warna hijau untuk Excel */
-            --success-hover: #059669;
-            --bg-color: #f0f9ff;
+            --primary-color: #0056b3;
+            --bg-color: #f4f7f6;
             --text-color: #333;
         }
         body {
@@ -21,262 +18,321 @@
             padding: 20px;
         }
         .container {
-            max-width: 850px;
-            margin: 0 auto;
+            max-width: 1000px;
+            margin: auto;
             background: white;
-            padding: 25px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1, h3 {
+        h1, h2, h3 {
             text-align: center;
             color: var(--primary-color);
-            margin: 5px 0;
-        }
-        hr {
-            border: 0;
-            height: 1px;
-            background: #ddd;
-            margin: 20px 0;
         }
         .form-group {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            justify-content: center;
             flex-wrap: wrap;
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            justify-content: center;
         }
-        input {
+        input, button {
             padding: 10px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            outline: none;
-        }
-        input:focus {
-            border-color: var(--secondary-color);
         }
         button {
-            padding: 10px 20px;
             background-color: var(--primary-color);
             color: white;
-            border: none;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            border: none;
             transition: background 0.3s;
         }
         button:hover {
-            background-color: var(--secondary-color);
+            background-color: #004494;
         }
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 30px;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 8px;
+        .btn-danger {
+            background-color: #dc3545;
         }
-        .section-header h2 {
-            margin: 0;
-            font-size: 20px;
-            color: var(--text-color);
+        .btn-danger:hover {
+            background-color: #c82333;
         }
-        .btn-export {
-            background-color: var(--success-color);
-            font-size: 14px;
-            padding: 6px 12px;
+        .btn-print {
+            background-color: #28a745;
         }
-        .btn-export:hover {
-            background-color: var(--success-hover);
+        .btn-print:hover {
+            background-color: #218838;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
         th, td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #ddd;
             padding: 12px;
             text-align: center;
         }
         th {
             background-color: var(--primary-color);
             color: white;
-            font-weight: 600;
         }
-        tr:nth-child(even) {
-            background-color: #f8fafc;
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        .delete-btn {
-            background-color: #ef4444;
-            padding: 5px 10px;
-            font-size: 14px;
+        .tab-content {
+            display: none;
         }
-        .delete-btn:hover {
-            background-color: #dc2626;
+        .tab-content.active {
+            display: block;
         }
-        .empty-msg {
-            color: #64748b;
-            font-style: italic;
+        
+        /* Pengaturan Khusus Print A4 */
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .tab-content {
+                display: block !important; /* Tampilkan semua tabel saat diprint */
+                page-break-inside: avoid;
+                margin-bottom: 30px;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            h2 {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Sistem Pendataan Penampungan Air AC</h1>
-    <h3>Kantor UPA Lingkungan Lahan Basah</h3>
-    <hr>
+    <h1>Data Penampungan Air AC<br>Kantor UPA Lingkungan Lahan Basah</h1>
 
-    <div class="form-group">
-        <input type="date" id="tanggal" required>
-        <input type="number" id="volume" placeholder="Volume Air (Liter)" step="0.1" required>
-        <button onclick="tambahData()">Simpan Data</button>
+    <div class="no-print">
+        <div class="form-group">
+            <input type="date" id="inputTanggal" required>
+            <input type="number" id="inputVolume" placeholder="Volume Air (Liter)" step="0.1" required>
+            <input type="text" id="inputLokasi" placeholder="Lokasi AC (Opsional)">
+            <button onclick="simpanData()">Simpan Data</button>
+        </div>
+        <div class="form-group">
+            <button class="btn-print" onclick="window.print()">🖨️ Cetak A4 (Print)</button>
+            <button class="btn-danger" onclick="hapusSemuaData()">🗑️ Reset Semua Data</button>
+        </div>
+
+        <div class="tabs">
+            <button onclick="bukaTab('harian')">Data Harian</button>
+            <button onclick="bukaTab('mingguan')">Rekap Mingguan</button>
+            <button onclick="bukaTab('bulanan')">Rekap Bulanan</button>
+            <button onclick="bukaTab('tahunan')">Rekap Tahunan</button>
+        </div>
     </div>
 
-    <div>
-        <div class="section-header">
-            <h2>1. Data Perhitungan Harian</h2>
-            <button class="btn-export" onclick="eksporHarian()">Excel (.csv)</button>
-        </div>
-        <table id="tabelHarian">
+    <div id="harian" class="tab-content active">
+        <h2>Data Perhitungan Harian</h2>
+        <table>
             <thead>
                 <tr>
                     <th>Tanggal</th>
+                    <th>Lokasi AC</th>
                     <th>Volume (Liter)</th>
-                    <th>Aksi</th>
+                    <th class="no-print">Aksi</th>
                 </tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody id="tabelHarian"></tbody>
         </table>
     </div>
 
-    <div>
-        <div class="section-header">
-            <h2>2. Data Perhitungan Mingguan</h2>
-            <button class="btn-export" onclick="eksporMingguan()">Excel (.csv)</button>
-        </div>
-        <table id="tabelMingguan">
+    <div id="mingguan" class="tab-content">
+        <h2>Rekap Data Perhitungan Mingguan</h2>
+        <table>
             <thead>
                 <tr>
-                    <th>Rentang Minggu (Senin - Minggu)</th>
+                    <th>Minggu Ke (Tahun-W)</th>
                     <th>Total Volume (Liter)</th>
                 </tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody id="tabelMingguan"></tbody>
         </table>
     </div>
 
-    <div>
-        <div class="section-header">
-            <h2>3. Data Perhitungan Bulanan</h2>
-            <button class="btn-export" onclick="eksporBulanan()">Excel (.csv)</button>
-        </div>
-        <table id="tabelBulanan">
+    <div id="bulanan" class="tab-content">
+        <h2>Rekap Data Perhitungan Bulanan</h2>
+        <table>
             <thead>
                 <tr>
-                    <th>Bulan - Tahun</th>
+                    <th>Bulan (Tahun-Bulan)</th>
                     <th>Total Volume (Liter)</th>
                 </tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody id="tabelBulanan"></tbody>
         </table>
     </div>
 
-    <div>
-        <div class="section-header">
-            <h2>4. Data Perhitungan Tahunan</h2>
-            <button class="btn-export" onclick="eksporTahunan()">Excel (.csv)</button>
-        </div>
-        <table id="tabelTahunan">
+    <div id="tahunan" class="tab-content">
+        <h2>Rekap Data Perhitungan Tahunan</h2>
+        <table>
             <thead>
                 <tr>
                     <th>Tahun</th>
                     <th>Total Volume (Liter)</th>
                 </tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody id="tabelTahunan"></tbody>
         </table>
     </div>
+
 </div>
 
 <script>
-    // Inisialisasi data dari Local Storage
-    let dataAir = JSON.parse(localStorage.getItem('dataAirAC')) || [];
+    // Inisialisasi data dari LocalStorage
+    let dataAirAC = JSON.parse(localStorage.getItem('dataAirAC')) || [];
 
-    // Format Tanggal (Bulan dalam bahasa Indonesia)
-    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    // Fungsi mendapatkan minggu ke-berapa dalam setahun
+    function dapatkanMinggu(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        let weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+        return d.getUTCFullYear() + "-W" + weekNo.toString().padStart(2, '0');
+    }
 
-    // Helper untuk penambahan angka 0 pada tanggal (01, 02, dst)
-    function pad(n) { return n < 10 ? '0' + n : n; }
-
-    // Fungsi untuk menambah data
-    function tambahData() {
-        const tanggal = document.getElementById('tanggal').value;
-        const volume = parseFloat(document.getElementById('volume').value);
+    // Fungsi Simpan Data
+    function simpanData() {
+        const tanggal = document.getElementById('inputTanggal').value;
+        const volume = parseFloat(document.getElementById('inputVolume').value);
+        const lokasi = document.getElementById('inputLokasi').value || '-';
 
         if (!tanggal || isNaN(volume)) {
-            alert("Mohon isi tanggal dan volume dengan benar!");
+            alert("Harap isi tanggal dan volume dengan benar!");
             return;
         }
 
-        const newData = { id: Date.now(), tanggal, volume };
-        dataAir.push(newData);
+        const dataBaru = {
+            id: Date.now(),
+            tanggal: tanggal,
+            minggu: dapatkanMinggu(new Date(tanggal)),
+            bulan: tanggal.substring(0, 7),
+            tahun: tanggal.substring(0, 4),
+            volume: volume,
+            lokasi: lokasi
+        };
+
+        dataAirAC.push(dataBaru);
         
         // Urutkan data berdasarkan tanggal terbaru
-        dataAir.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-        simpanKeStorage();
-        renderSemuaData();
-
-        // Reset Form
-        document.getElementById('tanggal').value = '';
-        document.getElementById('volume').value = '';
-    }
-
-    // Fungsi untuk menghapus data
-    function hapusData(id) {
-        if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-            dataAir = dataAir.filter(item => item.id !== id);
-            simpanKeStorage();
-            renderSemuaData();
-        }
-    }
-
-    // Fungsi menyimpan ke Local Storage
-    function simpanKeStorage() {
-        localStorage.setItem('dataAirAC', JSON.stringify(dataAir));
-    }
-
-    // Fungsi utama untuk me-render semua tabel
-    function renderSemuaData() {
-        renderHarian();
-        renderRekapTabel();
-    }
-
-    // Tampilkan Data Harian
-    function renderHarian() {
-        const tbody = document.querySelector('#tabelHarian tbody');
-        tbody.innerHTML = '';
+        dataAirAC.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
         
-        if (dataAir.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="empty-msg">Belum ada data harian.</td></tr>';
-            return;
-        }
+        localStorage.setItem('dataAirAC', JSON.stringify(dataAirAC));
+        
+        document.getElementById('inputVolume').value = '';
+        document.getElementById('inputLokasi').value = '';
+        
+        renderSemuaTabel();
+        alert("Data berhasil disimpan!");
+    }
 
-        dataAir.forEach(item => {
+    // Fungsi Hapus Data Satuan
+    function hapusData(id) {
+        if(confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+            dataAirAC = dataAirAC.filter(d => d.id !== id);
+            localStorage.setItem('dataAirAC', JSON.stringify(dataAirAC));
+            renderSemuaTabel();
+        }
+    }
+
+    // Fungsi Hapus Semua Data
+    function hapusSemuaData() {
+        if(confirm("PERINGATAN: Semua data akan dihapus permanen. Lanjutkan?")) {
+            dataAirAC = [];
+            localStorage.removeItem('dataAirAC');
+            renderSemuaTabel();
+        }
+    }
+
+    // Fungsi Render Tabel Harian
+    function renderHarian() {
+        const tbody = document.getElementById('tabelHarian');
+        tbody.innerHTML = '';
+        dataAirAC.forEach(d => {
             tbody.innerHTML += `
                 <tr>
-                    <td>${formatTanggalIndo(item.tanggal)}</td>
-                    <td>${item.volume.toFixed(2)} L</td>
-                    <td>
+                    <td>${d.tanggal}</td>
+                    <td>${d.lokasi}</td>
+                    <td>${d.volume} L</td>
+                    <td class="no-print"><button class="btn-danger" onclick="hapusData(${d.id})">Hapus</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    // Fungsi Render Tabel Rekap (Bisa untuk Mingguan, Bulanan, Tahunan)
+    function renderRekap(kunci, elemenId) {
+        const rekap = {};
+        dataAirAC.forEach(d => {
+            if (!rekap[d[kunci]]) {
+                rekap[d[kunci]] = 0;
+            }
+            rekap[d[kunci]] += d.volume;
+        });
+
+        const tbody = document.getElementById(elemenId);
+        tbody.innerHTML = '';
+        
+        // Urutkan key dari yang terbaru
+        const sortedKeys = Object.keys(rekap).sort((a, b) => b.localeCompare(a));
+
+        sortedKeys.forEach(k => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${k}</td>
+                    <td>${rekap[k].toFixed(2)} L</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Panggil semua render
+    function renderSemuaTabel() {
+        renderHarian();
+        renderRekap('minggu', 'tabelMingguan');
+        renderRekap('bulan', 'tabelBulanan');
+        renderRekap('tahun', 'tabelTahunan');
+    }
+
+    // Fungsi Navigasi Tab
+    function bukaTab(namaTab) {
+        const tabs = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        document.getElementById(namaTab).classList.add('active');
+    }
+
+    // Set tanggal default hari ini
+    document.getElementById('inputTanggal').valueAsDate = new Date();
+
+    // Render tabel saat pertama kali dimuat
+    renderSemuaTabel();
+</script>
+
+</body>
+</html>

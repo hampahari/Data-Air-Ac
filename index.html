@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pendataan Air AC - UPA Lahan Basah</title>
+    <title>Pendataan Air AC - UPA Lingkungan Lahan Basah ULM</title>
     <style>
         :root {
             --primary-color: #0284c7; /* Warna biru air */
@@ -160,7 +160,24 @@
 
     <div>
         <div class="section-header">
-            <h2>2. Data Perhitungan Bulanan</h2>
+            <h2>2. Data Perhitungan Mingguan</h2>
+            <button class="btn-export" onclick="eksporMingguan()">Excel (.csv)</button>
+        </div>
+        <table id="tabelMingguan">
+            <thead>
+                <tr>
+                    <th>Rentang Minggu (Senin - Minggu)</th>
+                    <th>Total Volume (Liter)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div class="section-header">
+            <h2>3. Data Perhitungan Bulanan</h2>
             <button class="btn-export" onclick="eksporBulanan()">Excel (.csv)</button>
         </div>
         <table id="tabelBulanan">
@@ -177,7 +194,7 @@
 
     <div>
         <div class="section-header">
-            <h2>3. Data Perhitungan Tahunan</h2>
+            <h2>4. Data Perhitungan Tahunan</h2>
             <button class="btn-export" onclick="eksporTahunan()">Excel (.csv)</button>
         </div>
         <table id="tabelTahunan">
@@ -199,6 +216,9 @@
 
     // Format Tanggal (Bulan dalam bahasa Indonesia)
     const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // Helper untuk penambahan angka 0 pada tanggal (01, 02, dst)
+    function pad(n) { return n < 10 ? '0' + n : n; }
 
     // Fungsi untuk menambah data
     function tambahData() {
@@ -259,137 +279,4 @@
                 <tr>
                     <td>${formatTanggalIndo(item.tanggal)}</td>
                     <td>${item.volume.toFixed(2)} L</td>
-                    <td><button class="delete-btn" onclick="hapusData(${item.id})">Hapus</button></td>
-                </tr>
-            `;
-        });
-    }
-
-    // Membantu memformat tanggal YYYY-MM-DD menjadi DD/MM/YYYY
-    function formatTanggalIndo(dateStr) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-    }
-
-    // Fungsi Kalkulasi Rekap Bulanan dan Tahunan
-    function hitungRekap() {
-        const rekapBulanan = {};
-        const rekapTahunan = {};
-
-        // Gunakan salinan data agar rekap bulanan/tahunan berurutan maju
-        const dataUrutMaju = [...dataAir].reverse();
-
-        dataUrutMaju.forEach(item => {
-            const dateObj = new Date(item.tanggal);
-            const bulan = namaBulan[dateObj.getMonth()];
-            const tahun = dateObj.getFullYear();
-            const keyBulan = `${bulan} ${tahun}`;
-            
-            // Rekap Bulanan
-            if (!rekapBulanan[keyBulan]) rekapBulanan[keyBulan] = 0;
-            rekapBulanan[keyBulan] += item.volume;
-
-            // Rekap Tahunan
-            if (!rekapTahunan[tahun]) rekapTahunan[tahun] = 0;
-            rekapTahunan[tahun] += item.volume;
-        });
-
-        return { rekapBulanan, rekapTahunan };
-    }
-
-    // Tampilkan Data Bulanan & Tahunan ke Tabel
-    function renderRekapTabel() {
-        const { rekapBulanan, rekapTahunan } = hitungRekap();
-
-        // Render Bulanan
-        const tbodyBulanan = document.querySelector('#tabelBulanan tbody');
-        tbodyBulanan.innerHTML = '';
-        if (Object.keys(rekapBulanan).length === 0) {
-            tbodyBulanan.innerHTML = '<tr><td colspan="2" class="empty-msg">Belum ada data bulanan.</td></tr>';
-        } else {
-            for (const [bulanTahun, total] of Object.entries(rekapBulanan)) {
-                tbodyBulanan.innerHTML += `
-                    <tr>
-                        <td>${bulanTahun}</td>
-                        <td>${total.toFixed(2)} L</td>
-                    </tr>
-                `;
-            }
-        }
-
-        // Render Tahunan
-        const tbodyTahunan = document.querySelector('#tabelTahunan tbody');
-        tbodyTahunan.innerHTML = '';
-        if (Object.keys(rekapTahunan).length === 0) {
-            tbodyTahunan.innerHTML = '<tr><td colspan="2" class="empty-msg">Belum ada data tahunan.</td></tr>';
-        } else {
-            for (const [tahun, total] of Object.entries(rekapTahunan)) {
-                tbodyTahunan.innerHTML += `
-                    <tr>
-                        <td>${tahun}</td>
-                        <td>${total.toFixed(2)} L</td>
-                    </tr>
-                `;
-            }
-        }
-    }
-
-    // --- FITUR EKSPOR KE EXCEL ---
-    
-    function unduhCSV(konten, namaFile) {
-        // Menambahkan BOM (Byte Order Mark) agar Excel otomatis membaca dengan format UTF-8
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); 
-        const blob = new Blob([bom, konten], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", namaFile);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function eksporHarian() {
-        if (dataAir.length === 0) {
-            alert("Tidak ada data harian untuk diekspor!");
-            return;
-        }
-        let csv = "Tanggal,Volume (Liter)\n";
-        dataAir.forEach(item => {
-            csv += `"${formatTanggalIndo(item.tanggal)}","${item.volume.toFixed(2)}"\n`;
-        });
-        unduhCSV(csv, "Data_Harian_Air_AC_UPA_Lahan_Basah.csv");
-    }
-
-    function eksporBulanan() {
-        const { rekapBulanan } = hitungRekap();
-        if (Object.keys(rekapBulanan).length === 0) {
-            alert("Tidak ada data bulanan untuk diekspor!");
-            return;
-        }
-        let csv = "Bulan - Tahun,Total Volume (Liter)\n";
-        for (const [bulanTahun, total] of Object.entries(rekapBulanan)) {
-            csv += `"${bulanTahun}","${total.toFixed(2)}"\n`;
-        }
-        unduhCSV(csv, "Data_Bulanan_Air_AC_UPA_Lahan_Basah.csv");
-    }
-
-    function eksporTahunan() {
-        const { rekapTahunan } = hitungRekap();
-        if (Object.keys(rekapTahunan).length === 0) {
-            alert("Tidak ada data tahunan untuk diekspor!");
-            return;
-        }
-        let csv = "Tahun,Total Volume (Liter)\n";
-        for (const [tahun, total] of Object.entries(rekapTahunan)) {
-            csv += `"${tahun}","${total.toFixed(2)}"\n`;
-        }
-        unduhCSV(csv, "Data_Tahunan_Air_AC_UPA_Lahan_Basah.csv");
-    }
-
-    // Load data pertama kali halaman dibuka
-    window.onload = renderSemuaData;
-</script>
-
-</body>
-</html>
+                    <td>
